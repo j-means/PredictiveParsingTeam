@@ -62,6 +62,9 @@ public class CFVar extends CFExp{
 	
 	**********************************************************************/
 	public CofinFin eval(Map<String, CofinFin> env) throws Exception{
+		if(env == null) {
+			throw new Exception("error in eval : environment is null");
+		}
 		return null;
       
 	}
@@ -82,6 +85,9 @@ public class CFVar extends CFExp{
 	
 	**********************************************************************/
 	public CFExp substitute(Map<String, CFExp> bindings) throws Exception{
+		if(bindings == null) {
+			throw new Exception("error in substitute : bindings is null");
+		}
       return null;
       
          
