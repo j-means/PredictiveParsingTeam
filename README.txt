@@ -98,10 +98,10 @@ CFVar.java         - for expressions that are variables
 The only coding you will need to do for is of the
 eval, substitute, and deepCopy methods, and only in the classes
 
-CFBinary
-CFConditional
-CFUnary
-CFVar
+CFBinary      **Brook**
+CFConditional **Casey**
+CFUnary       **Jack**
+CFVar         **Jason**
  
 All the methods you need to code are specified in more detail in the classes
 where they sit. Some throw exceptions, and you should match the specified messages
