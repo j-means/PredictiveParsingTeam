@@ -583,7 +583,103 @@ correct code.
 
          }
     }
+    public CofinFin setDifference(CofinFin other)throws Exception{
+        
+        /***
 
+           Creates a new CF object and loads it with the
+           result of subtracting of the members of the set represented by other
+           from the set represented by this.
+           
+           There is one error condition, other is null.  If that is the case,
+           the method should throw an exception with the message
+           
+           "Invalid call to setDifference: other is null"
+
+
+
+            YOU MUST CODE THIS YOURSELF AS AN INDIVIDUAL
+
+
+        ***/
+            
+        CofinFin resultA = new CofinFin();
+            TreeSet<Integer> result = new TreeSet<Integer>();
+
+            if(other == null) 
+
+                throw new Exception ("Invalid call to setDifference: other is null");
+            else {
+                resultA.isComplemented = (this.isComplemented && !other.isComplemented);
+                if(this.isComplemented == false && other.isComplemented == false) {          
+                    result.addAll(this.theSet);           
+                    result.removeAll(other.theSet);
+                }
+                else if (this.isComplemented == false && other.isComplemented == true) {
+                    result.addAll(this.theSet);           
+                    result.retainAll(other.theSet);
+                }
+                else if (this.isComplemented == true && other.isComplemented == false)
+                {
+                    result.addAll(other.theSet);
+                    result.addAll(this.theSet);
+                }
+                else if (this.isComplemented == true && other.isComplemented == true) {
+                    result.addAll(other.theSet);
+                    result.removeAll(this.theSet);         
+                }
+                resultA.theSet.addAll(result);
+
+            }
+            return resultA;
+
+    }
+
+
+        public CofinFin symmetricDifference(CofinFin other)throws Exception{
+      
+        /***
+
+           Creates a new CF object and loads it with the
+           symmetric difference of  the set represented by other
+           and the set represented by this.
+           
+           There is one error condition, other is null.  If that is the case,
+           the method should throw an exception with the message
+           
+           "Invalid call to symmetricDifference: other is null"
+
+
+
+            YOU MUST CODE THIS YOURSELF AS AN INDIVIDUAL
+
+
+        ***/
+            
+            CofinFin resultA = new CofinFin();
+            TreeSet<Integer> result = new TreeSet<Integer>();
+
+            if(other == null) 
+
+                throw new Exception ("Invalid call to symmetricDifference: other is null");
+            else {
+                resultA.isComplemented = (this.isComplemented != other.isComplemented);
+                
+                    TreeSet<Integer> temp1 = new TreeSet<Integer>();
+                    temp1.addAll(this.theSet);           
+                    temp1.retainAll(other.theSet); //intersection 
+                    
+                    result.addAll(this.theSet);
+                    result.addAll(other.theSet);  //union
+                    
+                    result.removeAll(temp1);  // remove the intersection from union leaves the symmetric diff
+                    
+                resultA.theSet.addAll(result);
+
+            }
+            return resultA;
+
+    }
     private static  // so they will all be initialized to null
     CofinFin
     // I don't use l for an identifier

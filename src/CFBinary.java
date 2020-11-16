@@ -17,7 +17,9 @@ The constructors here and elsewhere tests the input so that only valid operators
 expressions can be created.
 
 *************************************************************************/
+
 import java.util.Map;
+
 public class CFBinary extends CFExp{
    
    private int operator;
@@ -89,8 +91,23 @@ public class CFBinary extends CFExp{
    **********************************************************************/
    
 	public CofinFin eval(Map<String, CofinFin> env) throws Exception{
+	    
+	    if(env==null)
+	        throw new Exception("error in eval : env is null");        
+	    
+	   CofinFin leftResult = leftSub.eval(env);
+	   CofinFin rightResult = rightSub.eval(env);
+	   
+	   if(operator == CFToken.UNION)
+	     return leftResult.union(rightResult); 
+	   else if(operator == CFToken.INTERSECTION)
+	         return leftResult.intersect(rightResult); 
+	   else if(operator == CFToken.SETDIFF)
+           return leftResult.setDifference(rightResult);       
+	  // if(operator == CFToken.SYMMETRICDIFF)
+	   else return leftResult.symmetricDifference(rightResult);
                
-         return null;
+        // return null;
       }
    
             
@@ -115,7 +132,13 @@ public class CFBinary extends CFExp{
  
 	public  CFExp substitute(Map<String, CFExp> bindings)throws Exception{
       
-      return null;
+	    if(bindings == null)
+	        throw new Exception ("error in substitute : bindings is null");
+	    
+      leftSub = leftSub.substitute(bindings);
+      rightSub = rightSub.substitute(bindings);
+	    
+	    return this;
       
    }
    
@@ -128,8 +151,16 @@ public class CFBinary extends CFExp{
    *****************************************************************/
 	public  CFExp deepCopy(){
      // should never throw an exception
-
-        return null;
+	   CFExp newLeft = leftSub.deepCopy();
+	   CFExp newRight = rightSub.deepCopy();
+	     
+    try {
+        CFBinary  bCopy = new CFBinary(this.operator, newLeft ,newRight);
+        return bCopy;
+    } catch (Exception e) {
+     return null;
+    }
+       
      }
  
 	
