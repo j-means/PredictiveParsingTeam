@@ -103,11 +103,9 @@ public class CFBinary extends CFExp{
 	   else if(operator == CFToken.INTERSECTION)
 	         return leftResult.intersect(rightResult); 
 	   else if(operator == CFToken.SETDIFF)
-           return leftResult.setDifference(rightResult);       
-	  // if(operator == CFToken.SYMMETRICDIFF)
+           return leftResult.setDifference(rightResult);       	  
 	   else return leftResult.symmetricDifference(rightResult);
                
-        // return null;
       }
    
             
