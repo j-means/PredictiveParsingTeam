@@ -1,37 +1,98 @@
 DISCUSSION OF THE COS 360 TEAM PARSER PROBLEM AND ITS FILES
 
-Due date: 24 November 2019 @ 8 AM
+Due date: 21 November 2020 @ 8 AM
 
 IMPORTANT:
 
-I want you to do the work on GitHub so I can see that everyone on the
-team is making a contribution.  Every team has at least one member who
-has taken Prof. MacLeod's COS 420 which uses GitHub for that purpose.  
-The members with GitHub experience can explain to the others how it works
-while I'm still figuring it out.
+I would like you to do the work on GitHub so I can see that everyone on the
+team is making a contribution
 
 When you have completed all the coding and are satisfied that your parser
 works correctly, please put all the source code for the classes you
 defined methods for in an archive file and upload the archive file
-to Blackboard.
+to Brightspace.
 
-These are the files for the team predictive parsing exercise which will read
+These are the 14 files for the team predictive parsing exercise which will read
 text representations of CofinFin expressions, parse them into CFExp objects,
 and then evaluate the results in an environment that associates some variables
 to CofinFin values.
 
+They are as follows
+
+9 Java template source code, discussed more below.
+
+CFBinary.java
+CFConditional.java
+CFConst.java
+CFExp.java
+CFParserDriver.java
+CFScanner.java
+CFToken.java
+CFUnary.java
+CFVar.java
+
+2 Test case files
+parserInvalidTest.txt
+parserValidTest.txt
+
+2 Test case correct output files
+invalidOut.txt
+validOut.txt
+
+This file
+README.txt
+
+The translation is from text files with CofinFin expressions to a Java type,
+CFExp, to represent them.  CFExp is an abstract, umbrella super class with 5 subclasses
+
+CFBinary.java        for expressions w binary operators at the root
+CFConditional.java   for if test then exp1 else exp2 endif expressions
+CFConst.java         for literals like { 1, 2 } or CMP{ 1, 2 }
+CFUnary.java         for expressions w unary operators at the root (only complement)
+CFVar.java           for variables, which should be bound in the environment
+
+The only coding you will need to do for these is of the
+eval, substitute, and deepCopy methods, and only in the classes
+
+CFBinary
+CFConditional
+CFUnary
+CFVar
+
+Those are all fairly simple methods that recurse on the tree structure of the
+expressions.
+
+There are 4 classes for the parser work
+
+CFExpParser.java    - where the actual parsing takes place
+                      YOU WILL NEED TO CODE MULTIPLE METHODS IN THIS CLASS, a method
+                      for each grammar variable except the start symbol
+
+CFParserDriver.java - for reading the source file of expressions
+                      to parse and calling the CFExpParser and
+                      displaying the results of the call
+                      NO CODING TO DO HERE; DO NOT MODIFY
+
+CFScanner.java      - for converting the text of the input file into
+                      a sequence of tokens
+                      NO CODING TO DO HERE; DO NOT MODIFY
+
+CFToken.java        - defines a class for representing the tokens(terminals)
+                      for this application.
+                      NO CODING TO DO HERE; DO NOT MODIFY
 
 We will use operators (from high priority to low)
 
 -  prefix, for absolute complement, that is -S = ({ 0, 1, 2, ... } \ S)
 
-   (rest are all infix)
+   (rest are all infix and associate to the left)
 @  for intersection
 U  for union
+\  for set difference
 (+) for symmetric difference
 
-These are comparison operators that can only appear in test
-positions.
+The following are comparison operators that can only appear in test
+conditions.
 
 <=  for the is subset of relation
 =   for set equality
@@ -65,61 +126,21 @@ in
   mainExp
 endlet
 
-The initial list of xj = expj; items just allows variables to stand for
-the expressions in later code.  During the parse, substitutions will be
-performed to return an expression that does not have any let...in...endlet
-expressions in it.
-
-Java Classes
-
-For the parsing activity
-
-CFExpParser.java    - where the actual parsing takes place
-                      YOU WILL NEED TO CODE MULTIPLE METHODS IN THIS CLASS
-
-CFParserDriver.java - for reading the source file of expressions
-                      to parse and calling the CFExpParser and
-                      displaying the results of the call
-CFScanner.java      - for converting the text of the input file into
-                      a sequence of tokens
-CFToken.java        - defines a class for representing the tokens(terminals)
-                      for this application.
+How to convert this source expression into a CFExp object is explained
+in CFExpParser.  There is more discussion of all the coding in the source templates.
 
 
-For CofinFin expression objects
-
-CFBinary.java      - for expressions using binary operators
-CFConditional.java - for if test then exp1 else exp2 endif expressions
-CFConst.java       - for constant expressions, like {1,2,3}
-CFExp.java         - the abstract class to cover the variations
-CFUnary.java       - for the unary complement operaton
-CFVar.java         - for expressions that are variables
-
-The only coding you will need to do for is of the
-eval, substitute, and deepCopy methods, and only in the classes
-
-CFBinary      **Brook**
-CFConditional **Casey**
-CFUnary       **Jack**
-CFVar         **Jason**
- 
 All the methods you need to code are specified in more detail in the classes
 where they sit. Some throw exceptions, and you should match the specified messages
 perfectly.
 
-There are some initial test cases and "correct" output in
+There are some initial test cases and "correct" output, but I may do much more
+extensive testing of both valid and invalid expressions when I have time to 
+generate the test cases.  I will certainly supply them to you when I have them.
 
-parserInvalidTest.txt - invalid expressions
-invalidOut.txt        - result of running those through the driver
-parserValidTest.txt   - valid expressions
-validOut.txt          - result of running those through the driver
-
-But I will do much more extensive testing of both valid and invalid expressions
-when I have time to generate the test cases.  I will certainly supply them to you
-when I have them.
-
-The tokens are defined in CFToken.java, but we reproduce that here.
-Their types are coded as int values.
+The tokens are defined in CFToken.java, and we give them and the grammar
+rules (w/o lookaheads; the lookaheads are given in CFExpParser.java).
+Their types are coded as int values in CFToken.java
 
    public static final int // for the token types
       SYMMETRICDIFF = 0, //  "(+)"  an operator
@@ -153,8 +174,8 @@ Note that for NAT and ID and UNRECOGNIZED, the object will also include an
 accessible tokentString data member with the actual string value covered by
 the token.
 
-The grammar, which is given in CFParser.java, is reproduced here.  The replacement
-rules and lookahead sets are given.  The variables are
+The grammar, which is given in CFParser.java, is reproduced here.
+The variables are
 
 <S>
 <A>
@@ -171,85 +192,33 @@ rules and lookahead sets are given.  The variables are
 
 <S> is the start symbol.
 
-The replacement rules, with lookahead sets are as follows.  In some places
-we use Arden's lemma to convert the recursive spec into an iterative one.
+The replacement rules are as follows.  In CFExpParser, we indicate where you
+should use Arden's lemma to convert the recursion to iteration and what the
+lookaheads are.
 
 <S> ::= <E> EOS
-Lookahead sets
-union of the lookahead sets for <E>
-LET, IF, LEFTPAREN, COMPLEMENT, CMP, LEFTBRACE, ID
 
-<E> ::= LET <BLIST> IN <E> ENDLET |
-        IF <TEST> THEN <E> ELSE <E> ENDIF |
-        <E> SYMMETRICDIFF <A> | <A>
-converting the last two righthand sides to   <A>(SYMMETRICDIFF <A>)*
-so that they become just one rhs, the Lookahead sets are
-LET | IF | LEFTPAREN, COMPLEMENT, CMP, LEFTBRACE, ID
-
-Technically, the first sets of <A>, <B>, <C>, and <D> are all the same,
-and none of these variables are nullable, so the lookaheads sets for each
-of the variables is the same, specifically,
-
-LEFTPAREN, COMPLEMENT, CMP, LEFTBRACE, ID
-
-<D> has several different rhs's that will partition this set of
-tokens, but the others all convert to a single rhs of the form
-
-<VAR>(OPERATORTOKEN <VAR>)*
-
-which you process with a loop, roughly
-
-CFExp result = VAR();
-
-while (lookahead is OPERATORTOKEN){
-   consume();
-   CFExp temp = VAR();
-   result = result OPERATORTOKEN temp;
-}
-e
-
+<E> ::= <E> SYMMETRICDIFF <A> | <A>
 
 <A> ::= <A> SETDIFF <B> | <B>
-convert to  <B> (SETDIFF <B>)*
 
 <B> ::= <B> UNION <C> | <C>
-convert to  <C> (UNION <C>)*
-
 
 <C> ::= <D> INTERSECTION <C> | <D>
-by Arden's lemma, this means <C> = (<D> INTERSECTION)*<D>
-but intersection is associative, so we can convert to
-<D>(INTERSECTION <D>)*
 
-If the operation really needed to associate to the right,
-it would be more complicated to process.
+<D> ::= COMPLEMENT <D> | ID | <CONST> | LEFTPAREN <E> RIGHTPAREN |
+        LET <BLIST> IN <E> ENDLET |
+        IF <TEST> THEN <E> ELSE <E> ENDIF 
 
-
-<D> ::= COMPLEMENT <D> | ID | <CONST> | LEFTPAREN <E> RIGHTPAREN
-Lookahead sets
-COMPLEMENT | ID | CMP, LEFTBRACE | LEFTPAREN
-
-<CONST> ::= LEFTBRACE <SET INTERIOR> RIGHTBRACE | CMP LEFTBRACE <SET INTERIOR> RIGHTBRACE
-Lookahead sets
-LEFTBRACE | CMP
+<CONST> ::= LEFTBRACE <SET INTERIOR> RIGHTBRACE | 
+            CMP LEFTBRACE <SET INTERIOR> RIGHTBRACE
 
 <SET INTERIOR> ::= "" | <NE SET INTERIOR>
-Lookahead sets
-RIGHTBRACE | NAT
 
 <NE SET INTERIOR ::= NAT | NAT COMMA <NE SET INTERIOR>
-converts to NAT (COMMA NAT)*
-Lookahead sets
-NAT
 
 <TEST> ::= <E> <TEST SUFFIX>
-Lookahead sets
-(union of the lookahead sets for rhs's of <E>)
 
 <TEST SUFFIX> ::= SUBSETOF <E> | EQUALS <E>
-Lookahead sets
-SUBSETOF | EQUALS
 
 <BLIST> ::= "" | ID EQUALS <E> SEMICOLON <BLIST>
-Lookahead sets
-IN | ID

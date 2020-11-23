@@ -42,7 +42,9 @@ private returnTypeForVAR VAR(){
 }
 
 The sets for each grammar variable are given in CFToken.  If the variable's
-name is NAME, then CFToken.NAMESet will contain the lookaheads.
+name is NAME, then CFToken.NAMESet will contain the lookaheads.  For example,
+for grammar variable A, CFToken.ASet is the set that contains all of A's 
+lookaheads.
 
 If rhsj is of the form
 
@@ -86,34 +88,32 @@ Lookahead sets
 union of the lookahead sets for <E>
 LET, IF, LEFTPAREN, COMPLEMENT, CMP, LEFTBRACE, ID
 
-<E> ::= LET <BLIST> IN <E> ENDLET |
-        IF <TEST> THEN <E> ELSE <E> ENDIF |
-        <E> SYMMETRICDIFF <A> | <A>
-converting the last two righthand sides to   <A>(SYMMETRICDIFF <A>)*
-so that they become just one rhs, the Lookahead sets are
-LET | IF | LEFTPAREN, COMPLEMENT, CMP, LEFTBRACE, ID
+<E> ::= <E> SYMMETRICDIFF <A> | <A>
+convert to <E> = <A>(SYMMETRICDIFF <A>)*
+so that they become just one rhs, the Lookahead set for <E> is
+LET, IF, LEFTPAREN, COMPLEMENT, CMP, LEFTBRACE, ID
 
-Technically, the first sets of <A>, <B>, <C>, and <D> are all the same,
-and none of these variables are nullable, so the lookaheads sets for each
-of the variables is the same, specifically,
+Technically, the first sets of <S>, <A>, <B>, <C>, <D>, and <E> 
+are all the same, and none of these variables are nullable, so
+the lookaheads sets for each of the variables is the same, specifically,
 
-LEFTPAREN, COMPLEMENT, CMP, LEFTBRACE, ID
+LET, IF, LEFTPAREN, COMPLEMENT, CMP, LEFTBRACE, ID
 
 <D> has several different rhs's that will partition this set of
 tokens, but the others all convert to a single rhs of the form
 
 <VAR>(OPERATORTOKEN <VAR>)*
 
-which you process with a loop, roughly
+which you should process with a loop, roughly
 
 CFExp result = VAR();
 
 while (lookahead is OPERATORTOKEN){
    consume();
    CFExp temp = VAR();
-   result = result OPERATORTOKEN temp;
+   result = result OPERATORTOKEN temp; // via the constructor
 }
-e
+
 
 
 <A> ::= <A> SETDIFF <B> | <B>
@@ -122,19 +122,29 @@ convert to  <B> (SETDIFF <B>)*
 <B> ::= <B> UNION <C> | <C>
 convert to  <C> (UNION <C>)*
 
+<C> ::= <C> INTERSECTION <D> | <D>
+convert to <D> (INTERSECTION <D>)*
 
-<C> ::= <D> INTERSECTION <C> | <D>
-by Arden's lemma, this means <C> = (<D> INTERSECTION)*<D>
-but intersection is associative, so we can convert to
-<D>(INTERSECTION <D>)*
 
-If the operation really needed to associate to the right,
-it would be more complicated to process.
 
+<D> accomplishes both the complement operation and the
+    "atoms"; using Arden's lemma.  Note the let and if 
+    expressions in effect have their own punctuation parentheses,
+    let-endlet and if-endif. 
+    
+You can convert this to
+    
+<D> = COMPLEMENT*(LET <BLIST> IN <E> ENDLET |
+                  IF <TEST> THEN <E> ELSE <E> ENDIF |
+                  ID | <CONST> | LEFTPAREN <E> RIGHTPAREN)
+
+and then use a loop to count the number of COMPLEMENT(-) operations.
 
 <D> ::= COMPLEMENT <D> | ID | <CONST> | LEFTPAREN <E> RIGHTPAREN
+        LET <BLIST> IN <E> ENDLET |
+        IF <TEST> THEN <E> ELSE <E> ENDIF 
 Lookahead sets
-COMPLEMENT | ID | CMP, LEFTBRACE | LEFTPAREN
+COMPLEMENT | ID | CMP, LEFTBRACE | LEFTPAREN | LET | IF
 
 <CONST> ::= LEFTBRACE <SET INTERIOR> RIGHTBRACE | CMP LEFTBRACE <SET INTERIOR> RIGHTBRACE
 Lookahead sets
@@ -144,14 +154,17 @@ LEFTBRACE | CMP
 Lookahead sets
 RIGHTBRACE | NAT
 
-<NE SET INTERIOR ::= NAT | NAT COMMA <NE SET INTERIOR>
-converts to NAT (COMMA NAT)*
+<NE SET INTERIOR> ::= NAT | NAT COMMA <NE SET INTERIOR>
+converts to (COMMA NAT)* NAT = NAT (COMMA NAT)*
 Lookahead sets
-NAT
+NAT | NAT
+so if you wanted to do this with recursive descent rather than
+iteration, you'd need to modify the productions to eliminate the 
+common prefix.  Easier to use iteration.
 
 <TEST> ::= <E> <TEST SUFFIX>
 Lookahead sets
-(union of the lookahead sets for rhs's of <E>)
+(the lookahead set for <E>)
 
 <TEST SUFFIX> ::= SUBSETOF <E> | EQUALS <E>
 Lookahead sets
@@ -160,6 +173,12 @@ SUBSETOF | EQUALS
 <BLIST> ::= "" | ID EQUALS <E> SEMICOLON <BLIST>
 Lookahead sets
 IN | ID
+
+this converts to
+<BLIST> = (ID EQUALS <E>)*
+but it has a tricky semantics that is described below.
+You should calculate a Map<String,CFExp> object from it.
+
 
 
 **********************************************************************************/
@@ -170,7 +189,8 @@ import java.util.List;
 import java.util.LinkedList;
 public class CFExpParser{
    // this scanner object will be used repeatedly;
-   // it does not appear to work consistently in between calls when it is bound to 
+   // it does not appear to work consistently in between
+   // calls when it is bound to 
    // standard in by the driver;
    private static CFScanner lex;
    
@@ -184,6 +204,9 @@ public class CFExpParser{
    }
       
    /*
+   
+   DO NOT MODIFY THIS
+   
    
    Builds the error message when there is a set of tokens that are expected.
    
@@ -217,6 +240,8 @@ public class CFExpParser{
    
    /*
    
+   DO NOT MODIFY THIS
+   
    Builds the error message when there is a single token that is expected.   
       
    ***********************************************************************/ 
@@ -244,10 +269,11 @@ public class CFExpParser{
    
    parse the next expression and return it or throw an exception
    
+   DO NOT MODIFY THIS
    */
    public CFExp parseNext() throws Exception{
       if (lex.getAtEOF())
-         throw new Exception("error in perseNext : scanner is at end of file at start of parse");
+         throw new Exception("error in parseNext : scanner is at end of file at start of parse");
       else
          return S();
    }
@@ -260,6 +286,7 @@ public class CFExpParser{
    but we will not consume the EOS symbol so we can put all the
    expressions in a single file.
      
+   DO NOT MODIFY THIS
    */
    
    private CFExp S()throws Exception{
@@ -271,8 +298,9 @@ public class CFExpParser{
          tk = lex.lookahead();
          tkT = tk.getTokenType();
          if (tkT != CFToken.EOS)
-            throw new Exception("error in S method : expression is not follows by $");
+            throw new Exception("error in S method : expression is not followed by $");
          else
+            // note, the EOS is not consumed
             return result;
       }
       else
@@ -287,6 +315,9 @@ public class CFExpParser{
    The general scheme is based on the replacement rules for the variable
    and is described above.
    
+   I have put in return types that I think are appropriate for each
+   grammar variable.
+   
    **************************************************************************/
    
    /*
@@ -296,12 +327,10 @@ public class CFExpParser{
    The grammar rule is
    
    
-   <E> ::= LET <BLIST> IN <E> ENDLET |
-           IF <TEST> THEN <E> ELSE <E> ENDIF |
-           <E> SYMMETRICDIFF <A> | <A>
+   <E> ::=  <E> SYMMETRICDIFF <A> | <A>
    convert the last two righthand sides to   <A>(SYMMETRICDIFF <A>)*
    Lookahead sets
-   LET | IF | LEFTPAREN, COMPLEMENT, CMP, LEFTBRACE, ID
+   LET, IF, LEFTPAREN, COMPLEMENT, CMP, LEFTBRACE, ID
    
    return the appropriate CFExp object or throw an exception.
    
@@ -353,10 +382,9 @@ public class CFExpParser{
    
    YOU MUST CODE THIS
    
-   <C> ::= <D> INTERSECTION <C> | <D>
-   by Arden's lemma, this means <C> = (<D> INTERSECTION)*<D>
-   but intersection is associative, so we can convert to
-   <D>(INTERSECTION <D>)*
+   <C> ::= <C> INTERSECTION <D> | <D>
+   by Arden's lemma, this means 
+   <C> = <D>(INTERSECTION <D>)*
 
 
    return the appropriate CFExp object or throw an exception.
@@ -374,22 +402,50 @@ public class CFExpParser{
    
    YOU MUST CODE THIS
    
-   <D> ::= COMPLEMENT <D> | ID | <CONST> | LEFTPAREN <E> RIGHTPAREN
+   <D> ::= COMPLEMENT <D> | ID | <CONST> | LEFTPAREN <E> RIGHTPAREN |
+           LET <BLIST> IN <E> ENDLET |
+           IF <TEST> THEN <E> ELSE <E> ENDIF 
+      
+   
    Lookahead sets
-   COMPLEMENT | ID | CMP, LEFTBRACE | LEFTPAREN
+   COMPLEMENT | ID | CMP, LEFTBRACE | LEFTPAREN | LET | IF
+
+   you convert it to 
    
-   You can convert this to
-   
-   (COMPLEMENT)*( ID | CMP, LEFTBRACE | LEFTPAREN <E> RIGHTPAREN)
-   
-   to eliminate the recursive call to D.
-   
+   <D> = COMPLEMENT*(LET <BLIST> IN <E> ENDLET |
+                     IF <TEST> THEN <E> ELSE <E> ENDIF |
+                     ID | <CONST> | LEFTPAREN <E> RIGHTPAREN)
+
    Since two complements in a row cancel, it's okay to just count
-   the number of complements reduce the number you actually use
-   to the remainder on division by 2.
+   the number of complements and reduce the number you actually use
+   to the remainder on division by 2, so, for input
    
+   - - - - - {}
+   
+   you construct an expression for
+   
+   - {}
+   
+   and for 
+   
+   - - - - - - {}
+   
+   you construct an expression for 
+   
+   {}
+   
+   The let expression deserves some explanation.  The syntax is
+   
+   LET <BLIST> IN <E> ENDLET
+   
+   BLIST() should return a Map<String,CFExp> object, call it M, and
+   E() should return a CFExp object, call it e.  The entire rhs 
+   should return e.substitute(M).
    
    return the appropriate CFExp object or throw an exception.
+   
+   The if expression is also a bit different and is discussed below below 
+   in the <TEST> and <TESTSUFFIX> methods.
 
    *************************************************************************/
    private CFExp D() throws Exception{
@@ -432,6 +488,10 @@ public class CFExpParser{
    new int[0]
    
    is fine for the empty string alternative.
+   
+   This will give you an array you can use with a CofinFin 
+   constructor.
+   
 
    *************************************************************************/
    private int[] SETINTERIOR() throws Exception{
@@ -445,10 +505,9 @@ public class CFExpParser{
    
    <NE SET INTERIOR ::= NAT | NAT COMMA <NE SET INTERIOR>
                        
-   which converts to  NAT (COMMA NAT)*
+   which converts to  (NAT COMMA)* NAT = NAT (COMMA NAT)*
    Lookahead sets
    NAT
-
 
    return the appropriate List<Integer> object for the sequence of NAT instances
    or throw an exception.
@@ -471,6 +530,7 @@ public class CFExpParser{
    
    res[0] is the first expression, for <E>, of type CFExp
    res[1] is Integer, token type of the relational operator in <TEST SUFFIX>
+          which will either be CFToken.SUBSETOF or CFToken.EQUALS
    res[2] is the second expression of the test, which comes from <TEST SUFFIX>
    
 
@@ -491,7 +551,9 @@ public class CFExpParser{
    We'll have it return Object[] res of size 2
    
    res[0] is Integer, the token type of the relational operator
-   res[1] is the second expression of the test, the value given in <E>, of type CFExp
+          which will either be CFToken.SUBSETOF or CFToken.EQUALS   
+   res[1] is the second expression of the test, the value given in <E>,
+          of type CFExp
    
 
    *************************************************************************/
@@ -505,7 +567,7 @@ public class CFExpParser{
    
    YOU MUST CODE THIS
    
-   This one is a little trickier.
+   This one is trickier.
    
    <BLIST> ::= "" | ID EQUALS <E> SEMICOLON <BLIST>
    Lookahead sets
@@ -524,12 +586,14 @@ public class CFExpParser{
    ID EQUALS <E> SEMICOLON
    
    in the list as follows.  Obtain the string of the ID, s, and
-   the CFExp the E returns, call it exp.  Then use the current value of
-   the Map object to obtain a substituted version of exp (it's okay
-   to store that in exp itself), where the substituted version is
-   constructed from exp's substitute method using the current value 
-   for the map object.   Then install (s, substituted version of exp)
-   in the map object.
+   the CFExp object that E() returns, call it exp.  Then use the 
+   current value of the Map object to obtain a substituted version
+   of exp (it's okay to store that in exp itself, as in
+   exp = exp.substitute(MapObject), because exp should be a local
+   variable), where the substituted version is constructed from 
+   exp's substitute method using the current value for the map 
+   object.   Then install (s, substituted version of exp) in the
+   map object.
    
    When you have processed all the single bindings in the list, return
    the final map object.
@@ -550,9 +614,11 @@ public class CFExpParser{
    {1} and then replace the (x, {1}) in the map with (x, {1} U {2}).
    
    
-   The reason we have to do a deep copy of what the map has for a
-   variable when we perform the substitutions using the map can be
-   illiustrated by the expression
+   The substitute method should be coded so that when a CFVar object 
+   is being replaced by an entry from the map, it is replaced by a
+   deep copy of the entry.  The reason we have to do a deep copy of
+   what the map has for a variable when we perform the substitutions
+   using the map can be illustrated by the expression
    
    let 
       x = x U x;

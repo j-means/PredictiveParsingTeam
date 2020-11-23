@@ -56,10 +56,12 @@ public class CFParserDriver{
       env.put("j", new CofinFin(true, new int[] {72}));
       env.put("k", new CofinFin(true, new int[] {0,1,2 }));
       env.put("m", new CofinFin(true, new int[] {0,1,2,3 }));
-      env.put("n", new CofinFin(true, new int[] {0,1,2,3,4 }));
+      env.put("n", new CofinFin(true, new int[] {0,1,2,3,4}));
       env.put("o", new CofinFin(true, new int[] {0,1,2,3,4,5 }));
       env.put("p", new CofinFin(true, new int[] {0,1,2,3,4,5,6 }));
       env.put("q", new CofinFin(true, new int[] {0,1,2,3,4,5,6,7 }));
+      env.put("s", new CofinFin(false, new int[] {1,2}));
+      env.put("t", new CofinFin(false, new int[] {2}));
       env.put("r", new CofinFin(true, new int[] {}));
    }
       
@@ -100,8 +102,10 @@ public class CFParserDriver{
          try{
             exp = parser.parseNext();
             result = exp.eval(env);
-            System.out. println("Expression #" + expNum + " parse was successful.\nIt is "
-            + exp.toString() + "\nand it evaluates to \n" + result.toString());
+            System.out. println("Expression #" + expNum + 
+            " parse was successful.\nIt is "
+            + exp.toString() + "\nand it evaluates to \n" +
+            result.toString());
             lex.reset();
             validExpCount++;
          }
