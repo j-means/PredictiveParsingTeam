@@ -348,7 +348,7 @@ public class CFExpParser{
           result = new CFBinary(CFToken.SYMMETRICDIFF,result,temp);
       }
       
-      return null;
+      return result;
 
             
    }
@@ -378,7 +378,7 @@ public class CFExpParser{
            result = new CFBinary(CFToken.SETDIFF,result,temp);
        }
        
-       return null;
+       return result;
       
    }
 
@@ -407,7 +407,7 @@ public class CFExpParser{
            result = new CFBinary(CFToken.UNION,result,temp);
        }
        
-       return null;
+       return result;
       
       
    }
@@ -440,7 +440,7 @@ public class CFExpParser{
            result = new CFBinary(CFToken.INTERSECTION,result,temp);
        }
        
-       return null;
+       return result;
 
       
    }
@@ -524,19 +524,18 @@ public class CFExpParser{
            tk = lex.lookahead();
            if(!(tk.getTokenType()== CFToken.IN))
                throw new Exception (getErrorMessage("D",CFToken.IN, lex));
-           else {
-               lex.consume();
-               CFExp result = E().substitute(resultMap);
-               tk = lex.lookahead();
-               if(!(tk.getTokenType()== CFToken.ENDLET))
-                   throw new Exception (getErrorMessage("D",CFToken.ENDLET, lex));
-               else {
-                   lex.consume();
-                   if(cmp)
-                       return new CFUnary(result);
-                   else return result;
-               }
-           }
+           lex.consume();
+           CFExp result = E().substitute(resultMap);
+           tk = lex.lookahead();
+           if(!(tk.getTokenType()== CFToken.ENDLET))
+               throw new Exception (getErrorMessage("D",CFToken.ENDLET, lex));
+           // because execution generally stops when a throw is hit
+           // the else here is implied
+           lex.consume();
+           if(cmp)
+               return new CFUnary(result);
+           // else
+           return result;
        }                   
        else if (tk.getTokenType()== CFToken.IF) { 
            lex.consume();
@@ -544,41 +543,35 @@ public class CFExpParser{
            tk = lex.lookahead();
            if(!(tk.getTokenType()== CFToken.THEN))
                throw new Exception (getErrorMessage("D",CFToken.THEN, lex));
-           else {
-               lex.consume();
-               CFExp Res1 = E();
-               tk = lex.lookahead();
-               if(!(tk.getTokenType()== CFToken.ELSE))
-                   throw new Exception (getErrorMessage("D",CFToken.ELSE, lex));
-               else {
-                   lex.consume();
-                   CFExp Res2 = E();
-                   tk = lex.lookahead();
-                   if(!(tk.getTokenType()== CFToken.ENDIF))
-                       throw new Exception (getErrorMessage("D",CFToken.ENDIF, lex));
-                   else {
-                       lex.consume();
-                       CFConditional  resFinal = new CFConditional((Integer)result[1], (CFExp)result[0], (CFExp)result[2], Res1, Res2);
-                       if(cmp)
-                           return new CFUnary (resFinal);
-                       else return resFinal;                  
-                   }
-               }
-           }
+           lex.consume();
+           CFExp Res1 = E();
+           tk = lex.lookahead();
+           if(!(tk.getTokenType()== CFToken.ELSE))
+               throw new Exception (getErrorMessage("D",CFToken.ELSE, lex));
+           lex.consume();
+           CFExp Res2 = E();
+           tk = lex.lookahead();
+           if(!(tk.getTokenType()== CFToken.ENDIF))
+               throw new Exception (getErrorMessage("D",CFToken.ENDIF, lex));
+           lex.consume();
+           CFConditional  resFinal = new CFConditional((Integer)result[1], (CFExp)result[0], (CFExp)result[2], Res1, Res2);
+           if(cmp)
+               return new CFUnary (resFinal);
+           return resFinal;                  
        }
        else if(tk.getTokenType()==CFToken.ID) {
            CFVar result = new CFVar(tk.getTokenString());
            lex.consume();
            if(cmp)
                return new CFUnary(result);
-           else return result;
+           return result;
        }
        else if (CFToken.CONSTSet.contains(tkT)) {
            CofinFin resultConst = CONST();
            CFConst result = new CFConst(resultConst);
            if(cmp)
                return new CFUnary(result);
-           else return result;
+           return result;
        }
        else if (tk.getTokenType()==CFToken.LEFTPAREN) {
            lex.consume();        
@@ -586,18 +579,13 @@ public class CFExpParser{
            tk = lex.lookahead();         
            if(!(tk.getTokenType()==CFToken.RIGHTPAREN)) 
                throw new Exception (getErrorMessage("D",CFToken.RIGHTPAREN, lex));
-
-           else{
-               lex.consume();
-               if(cmp)
-                   return new CFUnary(result);
-               else return result;
-           }         
+           lex.consume();
+           if(cmp)
+               return new CFUnary(result);
+           return result;
        }
-
-       return null;
-
-            
+       // What should this return? Probably not null
+       return null;     
    }
 
    /*
@@ -682,8 +670,21 @@ public class CFExpParser{
 
    *************************************************************************/
    private Object[] TEST() throws Exception{
-      return null;
-      
+	  Object[] result = new Object[3],
+			  suffixResult;
+	  CFToken current = lex.lookahead();
+	  // error checking
+	  if(! CFToken.TESTSet.contains(current.getTokenType())){
+		  throw new Exception(getErrorMessage("TEST", CFToken.TESTSet, lex));
+	  }
+	  // The first CFExp
+	  result[0] = E();
+	  // get the contents of <testSuffix> and appropriately set it in this return variable
+	  suffixResult = TESTSUFFIX();
+	  result[1] = suffixResult[0];
+	  result[2] = suffixResult[1];
+	   
+      return result;
    }
 
    /*
@@ -704,9 +705,19 @@ public class CFExpParser{
 
    *************************************************************************/
    private Object[] TESTSUFFIX() throws Exception{
- 
-      return null;
-      
+	  Object[] result = new Object[2];
+	  CFToken current = lex.lookahead();
+	  // error checking
+	  if(! CFToken.TESTSUFFIXSet.contains(current.getTokenType())){
+		  throw new Exception(getErrorMessage("TESTSUFFIX", CFToken.TESTSUFFIXSet, lex));
+	  }
+	  // set the first return value to the token type of the operator
+	  result[0] = current.getTokenType();
+	  lex.consume();
+	  // parse the right side of the expression
+	  result[1] = E();
+	  
+      return result;
    }
 
    /*
