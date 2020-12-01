@@ -184,6 +184,7 @@ You should calculate a Map<String,CFExp> object from it.
 **********************************************************************************/
 import java.util.Set;
 import java.util.Map;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.LinkedList;
@@ -370,7 +371,7 @@ public class CFExpParser{
        CFExp result = B();
        
        if(!CFToken.ESet.contains(tk.getTokenType()))
-           throw new Exception(getErrorMessage("E", CFToken.ESet, lex)); 
+           throw new Exception(getErrorMessage("A", CFToken.ASet, lex)); 
        
        while (tk.getTokenType() == CFToken.SETDIFF) {            
            lex.consume();
@@ -399,7 +400,7 @@ public class CFExpParser{
        CFExp result = C();
        
        if(!CFToken.ESet.contains(tk.getTokenType()))
-           throw new Exception(getErrorMessage("E", CFToken.ESet, lex)); 
+           throw new Exception(getErrorMessage("B", CFToken.BSet, lex)); 
        
        while (tk.getTokenType() == CFToken.UNION) {            
            lex.consume();
@@ -432,7 +433,7 @@ public class CFExpParser{
        CFExp result = C();
        
        if(!CFToken.ESet.contains(tk.getTokenType()))
-           throw new Exception(getErrorMessage("E", CFToken.ESet, lex)); 
+           throw new Exception(getErrorMessage("C", CFToken.CSet, lex)); 
        
        while (tk.getTokenType() == CFToken.INTERSECTION) {            
            lex.consume();
@@ -822,7 +823,47 @@ public class CFExpParser{
   
    *************************************************************************/
    private Map<String, CFExp> BLIST() throws Exception{
-      return null;
+       
+       Map <String, CFExp> resultMap = Collections.EMPTY_MAP;
+       
+       CFToken tk = lex.lookahead();
+       int tkT = tk.getTokenType();
+
+       if(!CFToken.BLISTSet.contains(tkT))
+           throw new Exception(getErrorMessage("BLIST", CFToken.BLISTSet, lex)); 
+       
+       tk = lex.lookahead();
+       
+       if(tkT == CFToken.IN) {     
+           lex.consume();
+       
+       }      
+       else if (!(tkT == CFToken.ID)) 
+            throw new Exception (getErrorMessage("BLIST",CFToken.ID, lex));
+           
+       else {
+           while(tkT == CFToken.ID) {
+           String tempRes = lex.toString();
+           lex.consume();
+           tk = lex.lookahead();
+           if(!(tkT == CFToken.EQUALS))
+               throw new Exception (getErrorMessage("BLIST",CFToken.EQUALS, lex));
+           lex.consume();
+           resultMap.put(tempRes, E());
+           lex.consume();
+           tk = lex.lookahead();
+           if(!(tkT == CFToken.SEMICOLON))
+               throw new Exception (getErrorMessage("BLIST",CFToken.SEMICOLON, lex));
+           lex.consume();
+           tk = lex.lookahead();
+           }     
+       }
+       return resultMap;
+       
+       
+       
+       
+     // return null;
       
    }
       
