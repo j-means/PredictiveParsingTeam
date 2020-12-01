@@ -896,8 +896,6 @@ public class CFExpParser{
        if(!CFToken.BLISTSet.contains(tkT))
            throw new Exception(getErrorMessage("BLIST", CFToken.BLISTSet, lex)); 
        
-       tk = lex.lookahead();
-       
        if(tkT == CFToken.IN) {     
            lex.consume();
        }      
@@ -912,6 +910,7 @@ public class CFExpParser{
 	               throw new Exception (getErrorMessage("BLIST",CFToken.EQUALS, lex));
 	           lex.consume();
 	           resultMap.put(tempRes, E());
+	           resultMap.get(tempRes).substitute(resultMap);
 	           lex.consume();
 	           tk = lex.lookahead();
 	           if(!(tkT == CFToken.SEMICOLON))
