@@ -155,6 +155,8 @@ public class CFToken implements Comparable<CFToken>{
       ASet.add(CFToken.LEFTBRACE);
       ASet.add(CFToken.COMPLEMENT);
       ASet.add(CFToken.ID);
+      ASet.add(CFToken.LET);
+      ASet.add(CFToken.IF);
 
       TESTSUFFIXSet.add(CFToken.SUBSETOF);
       TESTSUFFIXSet.add(CFToken.EQUALS);
