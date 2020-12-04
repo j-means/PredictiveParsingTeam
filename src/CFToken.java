@@ -114,18 +114,13 @@ public class CFToken implements Comparable<CFToken>{
       EOF = 24, // to signal the end of the file/string has been reached
       UNRECOGNIZED = 25; // for anything else
 
-   public  static TreeSet<Integer> SSet = new  TreeSet<Integer>();  // for <S>
-
-   public  static TreeSet<Integer> ESet = SSet;      // for <E>; same as for <S>
-                                                     // and <TEST>
-   
-
-   
-   // <A>, <B>, <C>, <D> all have the same lookahead sets
+   // <A>, <B>, <C>, <D>, <E> and <S> all have the same lookahead sets
    public  static TreeSet<Integer> ASet = new TreeSet<Integer>();
    public  static TreeSet<Integer> BSet = ASet;
    public  static TreeSet<Integer> CSet = ASet;
    public  static TreeSet<Integer> DSet = ASet;
+   public  static TreeSet<Integer> SSet = ASet;
+   public  static TreeSet<Integer> ESet = ASet;
    
    public  static TreeSet<Integer> TESTSet = SSet;    // for <TEST>
    public  static TreeSet<Integer> TESTSUFFIXSet = new TreeSet<Integer>();    // for <TEST SUFFIX>
@@ -142,13 +137,6 @@ public class CFToken implements Comparable<CFToken>{
       // initializing code for the static variables of lookahead sets for the
       // grammar variables
 
-      SSet.add(CFToken.LEFTPAREN);
-      SSet.add(CFToken.CMP);
-      SSet.add(CFToken.LEFTBRACE);
-      SSet.add(CFToken.COMPLEMENT);
-      SSet.add(CFToken.ID);
-      SSet.add(CFToken.LET);
-      SSet.add(CFToken.IF);
 
       ASet.add(CFToken.LEFTPAREN);
       ASet.add(CFToken.CMP);
