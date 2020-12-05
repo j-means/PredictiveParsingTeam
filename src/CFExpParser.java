@@ -891,7 +891,7 @@ public class CFExpParser{
         if(!CFToken.BLISTSet.contains(tkT))
             throw new Exception(getErrorMessage("BLIST", CFToken.BLISTSet, lex)); 
 
-        while(tkT == CFToken.ID) {
+        while(tk.getTokenType() == CFToken.ID) {
             String tempRes = lex.lookahead().getTokenString();
             lex.consume();
             tk = lex.lookahead();
@@ -902,24 +902,24 @@ public class CFExpParser{
             lex.consume();
             
             // brigs said to set it to:
-            // resultMap.put(tempRes, E().substitute(resultMap));
-            resultMap.put(tempRes, E());
-            resultMap.get(tempRes).substitute(resultMap);
+             resultMap.put(tempRes, E().substitute(resultMap));
+           // resultMap.put(tempRes, E());
+           // resultMap.get(tempRes).substitute(resultMap);
             // rather than this
             
-            lex.consume();
+            //lex.consume();
             tk = lex.lookahead();
             
             if(!(tk.getTokenType() == CFToken.SEMICOLON))
                 throw new Exception (getErrorMessage("BLIST",CFToken.SEMICOLON, lex));
             
-            lex.consume();
+             lex.consume();
             tk = lex.lookahead();
         }
         
-        if(! (tk.getTokenType() == CFToken.IN))  
-        	throw new Exception (getErrorMessage("BLIST",CFToken.IN, lex));
-        	
+       // if(! (tk.getTokenType() == CFToken.IN))  
+        //  throw new Exception (getErrorMessage("BLIST",CFToken.IN, lex));
+            
         return resultMap;
     }
 }
