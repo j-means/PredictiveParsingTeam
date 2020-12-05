@@ -343,6 +343,7 @@ public class CFExpParser{
             throw new Exception(getErrorMessage("E", CFToken.ESet, lex)); 
         CFExp result = A();
         tk = lex.lookahead();
+        //loops through all SYMMETRICDIFF <A> occurrences
         while (tk.getTokenType() == CFToken.SYMMETRICDIFF) {            
             lex.consume();          
             CFExp temp = A();
@@ -372,6 +373,7 @@ public class CFExpParser{
             throw new Exception(getErrorMessage("A", CFToken.ASet, lex)); 
         CFExp result = B();
         tk = lex.lookahead();
+        //loops through all SETDIFF <B> occurrences
         while (tk.getTokenType() == CFToken.SETDIFF) {            
             lex.consume();
             CFExp temp = B();
@@ -396,11 +398,12 @@ public class CFExpParser{
      *************************************************************************/
     private CFExp B() throws Exception{
         CFToken tk = lex.lookahead();
-        
+
         if(!CFToken.BSet.contains(tk.getTokenType()))
             throw new Exception(getErrorMessage("B", CFToken.BSet, lex)); 
         CFExp result = C();
         tk = lex.lookahead();
+        //loops through all UNION <C> occurrences
         while (tk.getTokenType() == CFToken.UNION) {            
             lex.consume();
             CFExp temp = C();
@@ -425,14 +428,13 @@ public class CFExpParser{
      *************************************************************************/
     private CFExp C() throws Exception{
 
-
         CFToken tk = lex.lookahead();
-        
 
         if(!CFToken.CSet.contains(tk.getTokenType()))
             throw new Exception(getErrorMessage("C", CFToken.CSet, lex)); 
         CFExp result = D();
         tk = lex.lookahead();
+        //loops through all INTERSECTION <D> occurrences
         while (tk.getTokenType() == CFToken.INTERSECTION) {            
             lex.consume();
             CFExp temp = D();
@@ -441,7 +443,6 @@ public class CFExpParser{
         }
 
         return result;
-
 
     }
 
@@ -500,22 +501,25 @@ public class CFExpParser{
         CFToken tk = lex.lookahead();
         boolean cmp = false;
         int cmpCount = 0;
-        
+
         if(!CFToken.DSet.contains(tk.getTokenType()))
             throw new Exception(getErrorMessage("D", CFToken.DSet, lex));
 
+        //loop to count complement tokens
         while(tk.getTokenType() == CFToken.COMPLEMENT) {
             cmpCount++;
             lex.consume();
             tk=lex.lookahead();          
         }
-        
+
+        //if count of complement is odd, set bool cmp = true
         if(cmpCount % 2 == 1)
             cmp = true;
-        
+
+        //check again that next token is still in D set
         if(! CFToken.DSet.contains(tk.getTokenType()))
-        	throw new Exception(getErrorMessage("D", CFToken.DSet, lex));
-    
+            throw new Exception(getErrorMessage("D", CFToken.DSet, lex));
+        //LET <BLIST> IN <E> ENDLET
         if (tk.getTokenType()== CFToken.LET) {                
             lex.consume();
             tk = lex.lookahead();
@@ -524,20 +528,18 @@ public class CFExpParser{
             if(!(tk.getTokenType()== CFToken.IN))
                 throw new Exception (getErrorMessage("D",CFToken.IN, lex));
             lex.consume();
-            CFExp result = E().substitute(resultMap);
+            CFExp result = E().substitute(resultMap);//make substitutions with map from BLIST
             tk = lex.lookahead();
             if(!(tk.getTokenType()== CFToken.ENDLET))
-                throw new Exception (getErrorMessage("D",CFToken.ENDLET, lex));
-            
+                throw new Exception (getErrorMessage("D",CFToken.ENDLET, lex));            
             lex.consume();
             if(cmp)
-                return new CFUnary(result);
-            // else
+                return new CFUnary(result); //returns unary result only if it's a complement
             return result;
-        }                   
+        }   //IF <TEST> THEN <E> ELSE <E> ENDIF                
         else if (tk.getTokenType()== CFToken.IF) { 
             lex.consume();
-            Object result [] = TEST();            
+            Object result [] = TEST();  //array of 3 to be used in CFConditional constructor          
             tk = lex.lookahead();
             if(!(tk.getTokenType()== CFToken.THEN))
                 throw new Exception (getErrorMessage("D",CFToken.THEN, lex));
@@ -556,14 +558,14 @@ public class CFExpParser{
             if(cmp)
                 return new CFUnary (resFinal);
             return resFinal;                  
-        }
+        }//ID
         else if(tk.getTokenType()==CFToken.ID) {
             CFVar result = new CFVar(tk.getTokenString());
             lex.consume();
             if(cmp)
                 return new CFUnary(result);
             return result;
-        }
+        }//LEFTPAREN <E> RIGHTPAREN
         else if (tk.getTokenType()==CFToken.LEFTPAREN) {
             lex.consume();        
             CFExp result = E();
@@ -574,7 +576,7 @@ public class CFExpParser{
             if(cmp)
                 return new CFUnary(result);
             return result;
-        }
+        }//<CONST>
         else {
             CofinFin resultConst = CONST();
             CFConst result = new CFConst(resultConst);
@@ -582,7 +584,7 @@ public class CFExpParser{
                 return new CFUnary(result);
             return result;
         }
-            
+
     }
 
     /*
@@ -601,17 +603,17 @@ public class CFExpParser{
 
         CFToken tk = lex.lookahead();
         boolean cmp = false;
-        
+
         if (!CFToken.CONSTSet.contains(tk.getTokenType())) { // if not in LAS
             throw new Exception(getErrorMessage("CONST", CFToken.CONSTSet, lex));
         }
-        
+
         if (tk.getTokenType() == CFToken.CMP) { // if token is cmp, sets cmp = true and consumes it
             cmp = true;
             lex.consume();
             tk = lex.lookahead();
         }
-        
+
         if (tk.getTokenType() != CFToken.LEFTBRACE) {
             throw new Exception(getErrorMessage("CONST", CFToken.LEFTBRACE, lex));
         }
@@ -619,7 +621,7 @@ public class CFExpParser{
         lex.consume();
         CofinFin result = new CofinFin(cmp, SETINTERIOR());
         tk = lex.lookahead();
-        
+
         if (tk.getTokenType() != CFToken.RIGHTBRACE) {
             throw new Exception(getErrorMessage("CONST", CFToken.RIGHTBRACE, lex));
         }
@@ -652,7 +654,7 @@ public class CFExpParser{
      *************************************************************************/
     private int[] SETINTERIOR() throws Exception{
         CFToken tk = lex.lookahead();
-        
+
         if (!CFToken.SETINTERIORSet.contains(tk.getTokenType())) {
             throw new Exception(getErrorMessage("SETINTERIOR", CFToken.SETINTERIORSet, lex));
         }
@@ -660,7 +662,7 @@ public class CFExpParser{
         if (tk.getTokenType() == CFToken.RIGHTBRACE) {
             return new int[0];
         }
-        
+
         // LAS has to = NAT
         List<Integer> neSet = NESETINTERIOR();
         int[] result = new int[neSet.size()];
@@ -696,15 +698,15 @@ public class CFExpParser{
         result.add(Integer.parseInt(tk.getTokenString()));
         lex.consume();
         tk = lex.lookahead();
-        
+
         while (tk.getTokenType() == CFToken.COMMA) {
             lex.consume();
             tk = lex.lookahead();
-            
+
             if (! (tk.getTokenType() == CFToken.NAT)) {
-            	throw new Exception(getErrorMessage("NESETINTERIOR", CFToken.NAT, lex));
+                throw new Exception(getErrorMessage("NESETINTERIOR", CFToken.NAT, lex));
             }
-            
+
             result.add(Integer.parseInt(tk.getTokenString()));
             lex.consume();
             tk = lex.lookahead();
@@ -882,44 +884,47 @@ public class CFExpParser{
 
      *************************************************************************/
     private Map<String, CFExp> BLIST() throws Exception{
-        //(ID EQUALS <E> SEMICOLON)*
-        Map <String, CFExp> resultMap = new HashMap<String, CFExp>();
+        
+        Map <String, CFExp> resultMap = new HashMap<String, CFExp>(); //empty map
 
         CFToken tk = lex.lookahead();
         int tkT = tk.getTokenType();
 
         if(!CFToken.BLISTSet.contains(tkT))
             throw new Exception(getErrorMessage("BLIST", CFToken.BLISTSet, lex)); 
-
+        
+        //loops through ID EQUALS <E> SEMICOLON
         while(tk.getTokenType() == CFToken.ID) {
             String tempRes = lex.lookahead().getTokenString();
+           // consume ID
             lex.consume();
             tk = lex.lookahead();
-            
+
             if(!(tk.getTokenType() == CFToken.EQUALS))
                 throw new Exception (getErrorMessage("BLIST",CFToken.EQUALS, lex));
-            // consume the equals
+            // DELETE COMMENT consume the equals
             lex.consume();
-            
-            // brigs said to set it to:
-             resultMap.put(tempRes, E().substitute(resultMap));
-           // resultMap.put(tempRes, E());
-           // resultMap.get(tempRes).substitute(resultMap);
-            // rather than this
-            
-            //lex.consume();
+
+            // DELETE COMMENT brigs said to set it to:
+            //returns substituted version and installs in map
+            resultMap.put(tempRes, E().substitute(resultMap));
+            // DELETE COMMENT resultMap.put(tempRes, E());
+            // DELETE COMMENT resultMap.get(tempRes).substitute(resultMap);
+            // DELETE COMMENT rather than this
+
+            // DELETE COMMENT lex.consume();
             tk = lex.lookahead();
-            
+
             if(!(tk.getTokenType() == CFToken.SEMICOLON))
                 throw new Exception (getErrorMessage("BLIST",CFToken.SEMICOLON, lex));
-            
-             lex.consume();
+            // consumes semicolon
+            lex.consume();
             tk = lex.lookahead();
         }
-        
-       // if(! (tk.getTokenType() == CFToken.IN))  
-        //  throw new Exception (getErrorMessage("BLIST",CFToken.IN, lex));
-            
+
+        // DELETE COMMENT if(! (tk.getTokenType() == CFToken.IN))  
+        // DELETE COMMENT  throw new Exception (getErrorMessage("BLIST",CFToken.IN, lex));
+
         return resultMap;
     }
 }
