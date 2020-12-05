@@ -93,7 +93,7 @@ public class CFUnary extends CFExp {
     * 
     ************************************************************************/
    public CFExp deepCopy() {
-      CFExp newCopy = this.deepCopy();
+      CFExp newCopy = subExp.deepCopy();
       try {
          CFUnary copy = new CFUnary(newCopy);
          return copy;
